@@ -18,7 +18,7 @@ cache:
 #before_script:
 #  - npm install -g @angular/cli
 
-script:
+#script:
 #  - ng lint
 #  #  Watch mode (--watch true) will wait and check for any file changes
 #  #  and once it detects change it will rerun all the tests and again will wait for the next change.
@@ -33,6 +33,5 @@ deploy:
   provider:  pages
   skip_cleanup: true
   github-token: $GITHUB_TOKEN
-  local_dir: view
   on:
     branch: main
