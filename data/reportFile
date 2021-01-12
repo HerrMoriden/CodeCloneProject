@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pmd-cpd>
+  <duplication lines="81" tokens="215">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\tables\participant.php" line="106"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\tables\talk.php" line="106"/>
+    <codefragment>        return 'com_myconference.participant.' . (int) $this-&gt;$k;
+    }
+
+    /**
+     * Returns the parent asset's id.
+     * If you have a tree structure, retrieve the parent's id using the external key field
+     *
+     * @see Table::_getAssetParentId
+     */
+    protected function _getAssetParentId(Table $table = null, $id = null)
+    {
+        // We will retrieve the parent-asset from the Asset-table
+        $assetParent = Table::getInstance('Asset');
+        // Default: if no asset-parent can be found we take the global asset
+        $assetParentId = $assetParent-&gt;getRootId();
+        // The item has the component as asset-parent
+        $assetParent-&gt;loadByName('com_myconference');
+        // Return the found asset-parent-id
+        if ($assetParent-&gt;id) {
+            $assetParentId = $assetParent-&gt;id;
+        }
+        return $assetParentId;
+    }
+
+    public function initTheForeignTableOption()
+    {
+    }
+
+    public function loadAllPrimaryKeyofRef($pk, $keylist, $foreigntable, $foreignkeys, $foreignId)
+    {
+        $this-&gt;load($pk);
+        $query = $this-&gt;_db-&gt;getQuery(true);
+        $query-&gt;select($foreignId)
+            -&gt;from("#__" . $foreigntable);
+        foreach ($keylist as $index =&gt; $value) {
+            $query-&gt;where($this-&gt;_db-&gt;quoteName($foreignkeys[$index]) . "=" .
+            $this-&gt;_db-&gt;quoteName($this-&gt;$value));
+        }
+        $this-&gt;_db-&gt;setQuery($query);
+        $result = $this-&gt;_db-&gt;loadObjectList();
+        return $result;
+    }
+
+    public function publish($pks = null, $state = 1, $userId = 0)
+    {
+        $k = $this-&gt;_tbl_keys;
+        if (!is_null($pks)) {
+            foreach ($pks as $key =&gt; $pk) {
+                if (!is_array($pk)) {
+                    $pks[$key] = array($this-&gt;_tbl_key =&gt; $pk);
+                }
+            }
+        }
+    
+        $userId = (int) $userId;
+        $state  = (int) $state;
+    
+        // If there are no primary keys set check to see if the instance key is set.
+        if (empty($pks)) {
+            $pk = array();
+            foreach ($this-&gt;_tbl_keys as $key) {
+                if ($this-&gt;$key) {
+                    $pk[$this-&gt;$key] = $this-&gt;$key;
+                } else {
+                    return false;
+                }
+            }
+            $pks = array($pk);
+        }
+    
+        foreach ($pks as $pk) {
+            // Update the state state for rows with the given primary keys.
+            $query = $this-&gt;_db-&gt;getQuery(true)
+                -&gt;update($this-&gt;_tbl)
+                -&gt;set('state = ' . (int)$state);
+            $this-&gt;appendPrimaryKeys($query, $pk);
+    
+            $this-&gt;_db-&gt;setQuery($query);
+            $this-&gt;_db-&gt;execute();
+        }
+        return parent::publish($pks, $state, $userId);
+</codefragment>
+  </duplication>
+  <duplication lines="71" tokens="126">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\script.php" line="13"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\script.php" line="13"/>
+    <codefragment>defined('_JEXEC') or die('Restricted access');
+ 
+use Joomla\CMS\Table\Table;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Component\ComponentHelper;
+  
+/**
+ * com_MyConference  script.
+ */
+class Com_MyConferenceInstallerScript
+{
+    /**
+     * method to install the component
+     *
+     * @return void
+     */
+    public function install($parent)
+    {
+        if (!$this-&gt;setComponentParameter()) {
+            echo '&lt;p&gt;' .Text::_('COM_MYCONFERENCE_INSTALL_NO_PARAMETER_INSTALLED') . '&lt;/p&gt;';
+        }
+        $parent-&gt;getParent()-&gt;setRedirectURL('index.php?option=com_MyConference');
+    }
+
+    public function setComponentParameter()
+    {
+        // Load the current component params.
+        $params = ComponentHelper::getParams('com_myconference');
+        // Set new value of the param(s)
+        $params-&gt;set('upload_maxsize', 10);
+        $params-&gt;set(
+            'accept_format',
+            "bmp,csv,doc,gif,ico,jpg,jpeg,odg,odp,ods,odt,pdf,png," +
+            "ppt,swf,txt,xcf,xls,BMP,CSV,DOC,GIF,ICO,JPG,JPEG,ODG,ODP,ODS,ODT,PDF,PNG,PPT,SWF,TXT,XCF,XLS"
+        );
+    
+        // Save the parameters
+        $componentid = ComponentHelper::getComponent('com_myconference')-&gt;id;
+        $table = Table::getInstance('extension');
+        $table-&gt;load($componentid);
+        $table-&gt;bind(array('params' =&gt; $params-&gt;toString()));
+    
+        // check for error
+        if (!$table-&gt;check()) {
+            return false;
+        }
+        // Save to database
+        if (!$table-&gt;store()) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * method to uninstall the component
+     *
+     * @return void
+     */
+    public function uninstall($parent)
+    {
+        echo '&lt;p&gt;' .Text::_('COM_MYCONFERENCE_UNINSTALL_TEXT') . '&lt;/p&gt;';
+    }
+
+    /**
+     * method to update the component
+     *
+     * @return void
+     */
+    public function update($parent)
+    {
+        echo '&lt;p&gt;' . Text::sprintf('COM_MYCONFERENCE_UPDATE_TEXT', $parent-&gt;get('manifest')-&gt;version) . '&lt;/p&gt;';
+</codefragment>
+  </duplication>
+  <duplication lines="62" tokens="105">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\views\myconferences\view.html.php" line="11"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\views\myconferences\view.html.php" line="11"/>
+    <codefragment>defined('_JEXEC') or die('Restricted access');
+
+use Joomla\CMS\MVC\View\HtmlView;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
+
+ 
+/**
+ * MyConference View
+ */
+class MyConferenceViewMyConferences extends HtmlView
+{
+
+    /** Method to get display
+     *
+     * @param   Object  $tpl (template)
+     *
+     * @return  void
+     */
+    public function display($tpl = null)
+    {
+        if (!Factory::getUser()-&gt;authorise('core.administrator')) {
+            return JError::raiseWarning(404, Text::_('JERROR_ALERTNOAUTHOR'));
+        }
+
+        HTMLHelper::_('behavior.tooltip');
+
+        $document = Factory::getDocument();
+
+        HTMLHelper::_('tabs.start');
+
+        $application = Factory::getApplication("administrator");
+        $this-&gt;option = $application-&gt;scope;
+
+        $this-&gt;addToolBar();
+
+        $this-&gt;addViews();
+
+        parent::display($tpl);
+    }
+
+    /**
+     * creates a joomla administrator tool bar
+     *
+     * @return  void
+     */
+    private function addToolBar()
+    {
+        JToolBarHelper::title(Text::_('COM_MYCONFERENCE') . ': ' . Text::_('COM_MYCONFERENCE_HOME'), 'logo');
+        JToolBarHelper::preferences('com_myconference');
+    }
+
+    /**
+ * creates html elements for the main menu
+ *
+ * @return    void
+ */
+    private function addViews()
+    {
+        $views = array();
+        $views['participants'] = array();
+</codefragment>
+  </duplication>
+  <duplication lines="59" tokens="164">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\helpers\myconference.php" line="41"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\helpers\myconference.php" line="41"/>
+    <codefragment>    public static function getActions()
+    {
+        $user = Factory::getUser();
+        $result = new CMSObject;
+    
+        $assetName = 'com_MyConference';
+    
+        $actions = array(
+            'core.admin', 'core.manage', 'core.create', 'core.edit', 'core.edit.own', 'core.edit.state', 'core.delete');
+    
+        foreach ($actions as $action) {
+            $result-&gt;set($action, $user-&gt;authorise($action, $assetName));
+        }
+    
+        return $result;
+    }
+    /**
+     * Save a file in Server
+     * @param   $file     Array   contains the informtion of a File to upload
+     * @param   $target   String  contains the path of Directory
+     * @param   $oldName  String  contains the name of the old file
+     * @return  boolean or String
+     */
+    public static function uploadFiles($file, $target, $oldname)
+    {
+        $file['name'] = JFile::makeSafe($file['name']);
+        $file['name'] = str_replace(' ', '_', $file['name']);
+        $file['filepath'] = JPath::clean(implode(DIRECTORY_SEPARATOR, array(JPATH_ROOT, $target, $file['name'])));
+        if (JFile::exists($file['filepath'])) {
+            $index =1;
+            $file["name"] = $index."_".$file["name"];
+            $file['filepath'] = JPath::clean(implode(DIRECTORY_SEPARATOR, array(JPATH_ROOT, $target, $file['name'])));
+            while (JFile::exists($file['filepath'])) {
+                $index = $index +1;
+                $file["name"] = $index."_".$file["name"];
+                $file['filepath'] = JPath::clean(
+                    implode(
+                        DIRECTORY_SEPARATOR,
+                        array(
+                            JPATH_ROOT,
+                            $target,
+                            $file['name']
+                        )
+                    )
+                );
+            }
+        }
+        $object_file = new CMSObject($file);
+    
+        if (!JFile::upload($object_file-&gt;tmp_name, $object_file-&gt;filepath)) {
+            return false;
+        }
+        if (!empty($oldname)) {
+            $pathOfold = JPath::clean(implode(DIRECTORY_SEPARATOR, array(JPATH_ROOT, $target, $oldname)));
+            if (JFile::exists($pathOfold)) {
+                JFile::delete($pathOfold);
+            }
+        }
+        return $file['name'];
+</codefragment>
+  </duplication>
+  <duplication lines="58" tokens="122">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\tables\participant.php" line="49"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\tables\talk.php" line="49"/>
+    <codefragment>            &amp;&amp; (!Factory::getUser()-&gt;authorise('core.edit.state', 'com_myconference . participant.'.$array['id'])
+            &amp;&amp; $array['state'] == 1)) {
+            $array['state'] = 0;
+        }
+        if ($array['id'] == 0) {
+            $array['created_by'] = Factory::getUser()-&gt;id;
+        }
+    
+        //Support for file field: file
+    
+        if (isset($array['params']) &amp;&amp; is_array($array['params'])) {
+            $registry = new Registry();
+            $registry-&gt;loadArray($array['params']);
+            $array['params'] = (string) $registry;
+        }
+    
+        if (isset($array['metadata']) &amp;&amp; is_array($array['metadata'])) {
+            $registry = new Registry();
+            $registry-&gt;loadArray($array['metadata']);
+            $array['metadata'] = (string) $registry;
+        }
+    
+        //Bind the rules for ACL where supported.
+        if (isset($array['rules']) &amp;&amp; is_array($array['rules'])) {
+            $this-&gt;setRules($array['rules']);
+        }
+    
+        return parent::bind($array, $ignore);
+    }
+
+    /**
+    * Rewrite check function
+    */
+    public function check()
+    {
+        if (property_exists($this, 'ordering') &amp;&amp; $this-&gt;id == 0) {
+            $this-&gt;ordering = self::getNextOrder();
+        }
+    
+        return parent::check();
+    }
+
+    public function reset()
+    {
+        $this-&gt;id = 0;
+        parent::reset();
+    }
+
+    /**
+     * Define a namespaced asset name for inclusion in the #__assets table
+     * @return string The asset name
+     *
+     * @see Table::_getAssetName
+     */
+    protected function _getAssetName()
+    {
+        $k = $this-&gt;_tbl_key;
+        return 'com_myconference.participant.' . (int) $this-&gt;$k;
+</codefragment>
+  </duplication>
+  <duplication lines="57" tokens="110">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\models\participant.php" line="81"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\models\talk.php" line="81"/>
+    <codefragment>        $data = Factory::getApplication()-&gt;getUserState('com_myconference.edit.participant.data', array());
+    
+        if (empty($data)) {
+            $data = $this-&gt;getItem();
+        }
+    
+        return $data;
+    }
+    /**
+     * Method to get a single record.
+     *
+     * @param   integer  The id of the primary key.
+     *
+     * @return  mixed   Object on success, false on failure.
+     * @since 1.6
+     * @generated
+     */
+    public function getItem($pk = null)
+    {
+        $app = Factory::getApplication();
+        $pk = (!empty($pk)) ? $pk : $app-&gt;input-&gt;getInt("id");
+        $table = $this-&gt;getTable();
+        if ($pk &gt; 0) {
+            try {
+                // Attempt to load the row.
+                $table-&gt;load($pk);
+            } catch (Exception $e) {
+                // Check for a table object error.
+                throw new Exception('Database failure: No element found'. $e);
+            }
+        }
+    
+        // Convert to the CMSObject before adding other data.
+        $properties = $table-&gt;getProperties(1);
+        $item =  ArrayHelper::toObject($properties);
+    
+        if (property_exists($item, 'params')) {
+            $registry = new Registry;
+            $registry-&gt;loadString($item-&gt;params);
+            $item-&gt;params = $registry-&gt;toArray();
+        }
+    
+        return $item;
+    }
+    /**
+     * Prepare and sanitise the table prior to saving.
+     *
+     * @since 1.6
+     */
+    protected function prepareTable($table)
+    {
+        if (empty($table-&gt;id)) {
+            // Set ordering to the last item if not set
+            if ($table-&gt;ordering === '') {
+                $db = Factory::getDbo();
+                $query = $db-&gt;getQuery(true);
+                $query-&gt;select("MAX(ordering)")-&gt;from("#__MyConference_Participant");
+</codefragment>
+  </duplication>
+  <duplication lines="55" tokens="70">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\views\participant\tmpl\edit.php" line="15"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\views\talk\tmpl\edit.php" line="15"/>
+    <codefragment>use Joomla\CMS\HTML\HTMLHelper;
+
+HTMLHelper::addIncludePath(JPATH_COMPONENT . '/helpers/html');
+HTMLHelper::_('behavior.tooltip');
+HTMLHelper::_('behavior.formvalidation');
+HTMLHelper::_('formbehavior.chosen', 'select');
+HTMLHelper::_('behavior.keepalive');
+
+// Import CSS
+$document = Factory::getDocument();
+$document-&gt;addStyleSheet('components/com_myconference/assets/css/myconference.css');
+?&gt;
+&lt;script type="text/javascript"&gt;
+    js = jQuery.noConflict();
+    js(document).ready(function() {
+
+    });
+
+    Joomla.submitbutton = function(task)
+    {
+        if (task == 'participant.cancel') {
+            Joomla.submitform(task, document.getElementById('participant-form'));
+        } else {
+            if (
+                task != 'participant.cancel'
+                &amp;&amp; document.formvalidator.isValid(document.id('participant-form'))
+            ) {
+                Joomla.submitform(task, document.getElementById('participant-form'));
+            } else {
+                alert('&lt;?php echo $this-&gt;escape(Text::_('JGLOBAL_VALIDATION_FORM_FAILED')); ?&gt;');
+            }
+        }
+    }
+&lt;/script&gt;
+&lt;form action="&lt;?php echo Route::_('index.php?option=com_myconference&amp;layout=edit&amp;id=' . (int) $this-&gt;item-&gt;id); ?&gt;"
+      method="post"
+      enctype="multipart/form-data"
+      name="adminForm"
+      id="participant-form"
+      class="form-validate"&gt;
+
+    &lt;div class="form-horizontal"&gt;
+        &lt;?php echo HTMLHelper::_(
+            'bootstrap.startTabSet',
+            'myTab',
+            array(
+                'active' =&gt; 'general'
+            )
+        ); ?&gt;
+
+        &lt;?php echo HTMLHelper::_(
+            'bootstrap.addTab',
+            'myTab',
+            'general',
+            Text::_('COM_MYCONFERENCE_TITLE_PARTICIPANT', true)
+</codefragment>
+  </duplication>
+  <duplication lines="41" tokens="88">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\views\participants\tmpl\default.php" line="157"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\views\talks\tmpl\default.php" line="148"/>
+    <codefragment>                        $canCreate  = $user-&gt;authorise('core.create', 'com_myconference');
+                        $canEdit    = $user-&gt;authorise('core.edit', 'com_myconference');
+                        $canCheckin = $user-&gt;authorise('core.manage', 'com_myconference');
+                        $canChange  = $user-&gt;authorise('core.edit.state', 'com_myconference');
+                    ?&gt;
+                    &lt;tr class="row&lt;?php echo $i % 2; ?&gt;"&gt;
+                        &lt;?php if (isset($this-&gt;items[0]-&gt;ordering)) : ?&gt;
+                        &lt;td class="order nowrap center hidden-phone"&gt;
+                            &lt;?php if ($canChange) :
+                                $disableClassName = '';
+                                $disabledLabel    = '';
+                                if (!$saveOrder) :
+                                    $disabledLabel    = JText::_('JORDERINGDISABLED');
+                                    $disableClassName = 'inactive tip-top';
+                                endif; ?&gt;
+                            &lt;span class="sortable-handler hasTooltip &lt;?php echo $disableClassName?&gt;"
+                                  title="&lt;?php echo $disabledLabel?&gt;"&gt;
+                                &lt;i class="icon-menu"&gt;&lt;/i&gt;
+                            &lt;/span&gt;
+                            &lt;input type="text"
+                                   style="display:none"
+                                   name="order[]"
+                                   size="5"
+                                   value="&lt;?php echo $item-&gt;ordering;?&gt;"
+                                   class="width-20 text-area-order" /&gt;
+                            &lt;?php else : ?&gt;
+                            &lt;span class="sortable-handler inactive" &gt;
+                                &lt;i class="icon-menu"&gt;&lt;/i&gt;
+                            &lt;/span&gt;
+                            &lt;?php endif; ?&gt;
+                        &lt;/td&gt;
+                        &lt;?php endif; ?&gt;
+                        &lt;td class="center hidden-phone"&gt;
+                            &lt;?php echo HTMLHelper::_('grid.id', $i, $item-&gt;id); ?&gt;
+                        &lt;/td&gt;
+                        &lt;?php if (isset($this-&gt;items[0]-&gt;state)) : ?&gt;
+                        &lt;td class="center"&gt;
+                            &lt;?php echo HTMLHelper::_(
+                                'jgrid.published',
+                                $item-&gt;state,
+                                $i,
+</codefragment>
+  </duplication>
+  <duplication lines="41" tokens="121">
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_participant\administrator\components\com_myconference\views\participant\view.html.php" line="21"/>
+    <file path="C:\Users\merli\Desktop\extensions\extensions\com_myconference_talk\administrator\components\com_myconference\views\talk\view.html.php" line="21"/>
+    <codefragment>class MyConferenceViewParticipant extends HtmlView
+{
+    protected $state;
+    protected $item;
+    protected $form;
+
+    /**
+     * Display the view
+     */
+    public function display($tpl = null)
+    {
+        $this-&gt;setLayout('Edit');
+        $this-&gt;state = $this-&gt;get('State');
+        $this-&gt;item = $this-&gt;get('Item');
+        $this-&gt;form = $this-&gt;get('Form');
+    
+        if (count($errors = $this-&gt;get('Errors'))) {
+            throw new Exception(implode("\n", $errors));
+        }
+    
+        $this-&gt;addToolbar();
+        parent::display($tpl);
+    }
+    
+    /**
+     * Add the page title and toolbar.
+     */
+    protected function addToolbar()
+    {
+        Factory::getApplication()-&gt;input-&gt;set('hidemainmenu', true);
+    
+        $user = Factory::getUser();
+        $isNew = ($this-&gt;item-&gt;id == 0);
+        if (isset($this-&gt;item-&gt;checked_out)) {
+            $checkedOut = !($this-&gt;item-&gt;checked_out == 0 || $this-&gt;item-&gt;checked_out == $user-&gt;get('id'));
+        } else {
+            $checkedOut = false;
+        }
+        $canDo = ComMyConferenceHelper::getActions();
+    
+        JToolBarHelper::title(Text::_('COM_MYCONFERENCE_TITLE_PARTICIPANT'), 'participant.png');
+</codefragment>
+  </duplication>
+</pmd-cpd>
