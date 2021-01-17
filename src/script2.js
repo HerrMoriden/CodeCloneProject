@@ -52,22 +52,33 @@ var FileSource = /** @class */ (function () {
     }
     return FileSource;
 }());
+var duplicationList = [];
 $(function () {
     var input = document.getElementById('fileInput');
     input.addEventListener('change', function (event) {
         var file = event.target.files[0];
         handleThisShitPLs(file).then();
     });
+    var classSelector = "btn btn-secondary btn-sm py-0 modal-open";
+    document.addEventListener('click', function (e) {
+        // this error shoudlnt be there cause the browser doesnt throw any error here ...
+        if (e.target && e.target.className == classSelector) {
+            var dupeId = e.target.dataset.id;
+            console.log(e.target.dataset.id);
+            putDataIntoModal(dupeId);
+        }
+    });
+    $('#modal').on('hidden.bs.modal', function () {
+        $('#modalTitle').empty();
+        $('#modalBody').empty();
+        console.log('cleaned modal up');
+    });
 });
 function handleThisShitPLs(file) {
     return __awaiter(this, void 0, void 0, function () {
-        var filetype;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0:
-                    filetype = file.type;
-                    console.log(filetype);
-                    return [4 /*yield*/, parseFile(file)];
+                case 0: return [4 /*yield*/, parseFile(file)];
                 case 1:
                     _a.sent();
                     return [2 /*return*/];
@@ -111,11 +122,10 @@ function parseFromStringToXml(testString) {
 }
 function addXMLToDom(data) {
     var numOfDupes = data.getElementsByTagName('duplication').length;
-    var duplications = [];
     for (var i = 0; i < numOfDupes; i++) {
-        duplications.push(new Duplication(i, data.getElementsByTagName('duplication')[i].getAttribute('lines'), data.getElementsByTagName('duplication')[i].getAttribute('tokens'), new FileSource(data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[0].getAttribute('path'), data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[0].getAttribute('line')), new FileSource(data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[1].getAttribute('path'), data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[1].getAttribute('line')), data.getElementsByTagName("duplication")[i].getElementsByTagName('codefragment')[0].childNodes[0].nodeValue));
+        duplicationList.push(new Duplication(i, data.getElementsByTagName('duplication')[i].getAttribute('lines'), data.getElementsByTagName('duplication')[i].getAttribute('tokens'), new FileSource(data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[0].getAttribute('path'), data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[0].getAttribute('line')), new FileSource(data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[1].getAttribute('path'), data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[1].getAttribute('line')), data.getElementsByTagName("duplication")[i].getElementsByTagName('codefragment')[0].childNodes[0].nodeValue));
     }
-    makePrettyHtmlStuff(duplications);
+    makePrettyHtmlStuff(duplicationList);
 }
 function makePrettyHtmlStuff(dupeList) {
     var i = 0;
@@ -129,9 +139,18 @@ function makePrettyHtmlStuff(dupeList) {
             div = $("#result" + i / 4);
         }
         i++;
-        var htmlObj = $("\n        <div class=\"col-3\">\n            <div class=\"card border-success mb-3\">\n                <div class=\"card-header bg-transparent border-success\">\n                    <p>Duplication Num.: " + dupe.id + "</p>\n                    <p class=\"small\">Number of lines: " + dupe.lines + "</p>\n                    <p class=\"small\">Number of tokens: " + dupe.tokens + "</p>\n                </div>\n                \n                <div class=\"card-body text-secondary\">\n                \n                \n                    <h6 class=\"card-title mb-0\">FilePath 1: </h6>\n                    <button class=\"btn btn-secondary btn-sm py-0\" style=\"font-size: 0.8rem\" type=\"button\" role=\"button\"\n                     data-toggle=\"collapse\" data-target=\"#filePathOne" + dupe.id + "\">See Filepath</button>\n                    <div class=\"collapse\" id=\"filePathOne" + dupe.id + "\">\n                        <p class=\"small\">" + dupe.fileSource1.path + "</p>\n                    </div>                    \n                    \n                    <h6 class=\"card-title mb-0\">FilePath 2: </h6>\n                    <button class=\"btn btn-secondary btn-sm py-0\" style=\"font-size: 0.8rem\" type=\"button\" role=\"button\"\n                     data-toggle=\"collapse\" data-target=\"#filePathTwo" + dupe.id + "\">See Filepath</button>\n                    <div class=\"collapse\" id=\"filePathTwo" + dupe.id + "\">\n                        <p class=\"small\">" + dupe.fileSource2.path + "</p>\n                    </div>\n                    \n                    <h6 class=\"card-title mt-2 mb-0\">starting at line: </h6>\n                    <p class=\"small mt-0\">" + dupe.fileSource1.line + "</p>\n                    \n                    \n                    <button class=\"btn btn-secondary btn-sm py-0\" style=\"font-size: 0.8rem\" type=\"button\" role=\"button\"\n                     data-toggle=\"collapse\" data-target=\"#codeFragment" + dupe.id + "\">See Codeclone\n                     </button>\n                    <div class=\"collapse\" id=\"codeFragment" + dupe.id + "\">\n                        <h6 class=\"card-text\">CodeFragment</h6>\n                        <p class=\"small\">" + dupe.codefragment + "</p>\n                    </div>\n                </div>\n            </div>\n        </div>\n    ");
+        var htmlObj = $("\n        <div class=\"col-3\">\n            <div class=\"card border-success mb-3\">\n                <div class=\"card-header bg-transparent border-success\">\n                    <p>Duplication Num.: " + dupe.id + "</p>\n                    <p class=\"small\">Number of lines: " + dupe.lines + "</p>\n                    <p class=\"small\">Number of tokens: " + dupe.tokens + "</p>\n                </div>\n                \n                <div class=\"card-body text-secondary\">\n                \n                \n                    <h6 class=\"card-title mb-0\">FilePath 1: </h6>\n                    <button class=\"btn btn-secondary btn-sm py-0\" style=\"font-size: 0.8rem\" type=\"button\" role=\"button\"\n                     data-toggle=\"collapse\" data-target=\"#filePathOne" + dupe.id + "\">See Filepath</button>\n                    <div class=\"collapse\" id=\"filePathOne" + dupe.id + "\">\n                        <p class=\"small\">" + dupe.fileSource1.path + "</p>\n                    </div>                    \n                    \n                    <h6 class=\"card-title mb-0\">FilePath 2: </h6>\n                    <button class=\"btn btn-secondary btn-sm py-0\" style=\"font-size: 0.8rem\" type=\"button\" role=\"button\"\n                     data-toggle=\"collapse\" data-target=\"#filePathTwo" + dupe.id + "\">See Filepath</button>\n                    <div class=\"collapse\" id=\"filePathTwo" + dupe.id + "\">\n                        <p class=\"small\">" + dupe.fileSource2.path + "</p>\n                    </div>\n                    \n                    <h6 class=\"card-title mt-2 mb-0\">starting at line: </h6>\n                    <p class=\"small mt-0\">" + dupe.fileSource1.line + "</p>\n                    \n                    <button data-id=\"" + dupe.id + "\" class=\"btn btn-secondary btn-sm py-0 modal-open\" style=\"font-size: 0.8rem\" type=\"button\" role=\"button\"\n                     data-toggle=\"modal\" data-target=\"#modal\">See Codeclone\n                     </button>\n                </div>\n            </div>\n        </div>\n    ");
         div.append(htmlObj);
     }
     $('#littleSuccessMsg').append('Here are your CodeClones made pretty and seperated');
+}
+function putDataIntoModal(dupeId) {
+    var modal = $('#modal');
+    var modalTitle = $('#modalTitle');
+    var modalBody = $('#modalBody');
+    var duplication = duplicationList[dupeId];
+    modalTitle.html('Duplication: #' + duplication.id);
+    modalBody.append(duplication.codefragment);
+    modal.show();
 }
 //# sourceMappingURL=script2.js.map

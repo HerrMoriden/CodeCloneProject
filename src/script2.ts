@@ -6,7 +6,8 @@ class Duplication {
         public fileSource1: FileSource,
         public fileSource2: FileSource,
         public codefragment: string
-    ) {}
+    ) {
+    }
 
 }
 
@@ -14,22 +15,37 @@ class FileSource {
     constructor(
         public path: string,
         public line: number
-    ) {}
+    ) {
+    }
 }
 
+let duplicationList: Duplication[] = [];
 
 $(() => {
     const input = document.getElementById('fileInput');
     input.addEventListener('change', (event) => {
         let file = (event.target as HTMLInputElement).files[0];
         handleThisShitPLs(file).then();
+    });
 
+    let classSelector: string = "btn btn-secondary btn-sm py-0 modal-open";
+
+    document.addEventListener('click', function (e) {
+        // this error shoudlnt be there cause the browser doesnt throw any error here ...
+        if (e.target && e.target.className == classSelector) {
+            let dupeId: number = e.target.dataset.id;
+            console.log(e.target.dataset.id)
+            putDataIntoModal(dupeId)
+        }
+    })
+    $('#modal').on('hidden.bs.modal', function () {
+        $('#modalTitle').empty();
+        $('#modalBody').empty();
+        console.log('cleaned modal up')
     })
 });
 
 async function handleThisShitPLs(file: File) {
-    let filetype: string = file.type
-    console.log(filetype)
     await parseFile(file);
 }
 
@@ -40,20 +56,19 @@ async function parseFile(file: File) {
         let result: string = String(ev.target.result);
         return await parseFromStringToXml(result);
     }
-    reader.readAsText(file)
+    reader.readAsText(file);
 }
 
 async function parseFromStringToXml(testString: string) {
     let parser = new DOMParser();
     let xmlDoc = parser.parseFromString(testString, 'text/xml');
-    addXMLToDom(xmlDoc)
+    addXMLToDom(xmlDoc);
 }
 
 function addXMLToDom(data) {
     let numOfDupes: number = data.getElementsByTagName('duplication').length;
-    let duplications: Duplication[] = [];
     for (let i = 0; i < numOfDupes; i++) {
-        duplications.push(new Duplication(
+        duplicationList.push(new Duplication(
             i,
             data.getElementsByTagName('duplication')[i].getAttribute('lines'),
             data.getElementsByTagName('duplication')[i].getAttribute('tokens'),
@@ -63,9 +78,9 @@ function addXMLToDom(data) {
                 data.getElementsByTagName("duplication")[i].getElementsByTagName('file')[1].getAttribute('line')),
             data.getElementsByTagName("duplication")[i].getElementsByTagName('codefragment')[0].childNodes[0].nodeValue
             )
-        )
+        );
     }
-    makePrettyHtmlStuff(duplications);
+    makePrettyHtmlStuff(duplicationList);
 }
 
 function makePrettyHtmlStuff(dupeList: Duplication[]) {
@@ -110,19 +125,27 @@ function makePrettyHtmlStuff(dupeList: Duplication[]) {
                     <h6 class="card-title mt-2 mb-0">starting at line: </h6>
                     <p class="small mt-0">${dupe.fileSource1.line}</p>
                     
-                    
-                    <button class="btn btn-secondary btn-sm py-0" style="font-size: 0.8rem" type="button" role="button"
-                     data-toggle="collapse" data-target="#codeFragment${dupe.id}">See Codeclone
+                    <button data-id="${dupe.id}" class="btn btn-secondary btn-sm py-0 modal-open" style="font-size: 0.8rem" type="button" role="button"
+                     data-toggle="modal" data-target="#modal">See Codeclone
                      </button>
-                    <div class="collapse" id="codeFragment${dupe.id}">
-                        <h6 class="card-text">CodeFragment</h6>
-                        <p class="small">${dupe.codefragment}</p>
-                    </div>
                 </div>
             </div>
         </div>
     `);
+
         div.append(htmlObj);
     }
-    $('#littleSuccessMsg').append('Here are your CodeClones made pretty and seperated')
+    $('#littleSuccessMsg').append('Here are your CodeClones made pretty and seperated');
+}
+
+function putDataIntoModal(dupeId: number) {
+    let modal: JQuery = $('#modal');
+    let modalTitle: JQuery = $('#modalTitle');
+    let modalBody: JQuery = $('#modalBody');
+
+    let duplication: Duplication = duplicationList[dupeId];
+
+    modalTitle.html('Duplication: #' + duplication.id);
+    modalBody.append(duplication.codefragment);
+    modal.show();
 }
