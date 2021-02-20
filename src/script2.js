@@ -61,16 +61,19 @@ $(function () {
     });
     var classSelector = "btn btn-secondary btn-sm py-0 modal-open";
     document.addEventListener('click', function (e) {
-        // this error shoudlnt be there cause the browser doesnt throw any error here ...
+        // these error shoudlnt be there cause the browser doesnt throw any error here ...
+        // @ts-ignore
         if (e.target && e.target.className == classSelector) {
+            // @ts-ignore
             var dupeId = e.target.dataset.id;
+            // @ts-ignore
             console.log(e.target.dataset.id);
             putDataIntoModal(dupeId);
         }
     });
     $('#modal').on('hidden.bs.modal', function () {
         $('#modalTitle').empty();
-        $('#modalBody').empty();
+        $('#codeFragmentElement').empty();
         console.log('cleaned modal up');
     });
 });
@@ -147,10 +150,10 @@ function makePrettyHtmlStuff(dupeList) {
 function putDataIntoModal(dupeId) {
     var modal = $('#modal');
     var modalTitle = $('#modalTitle');
-    var modalBody = $('#modalBody');
+    var codeFragmentElement = $('#codeFragmentElement');
     var duplication = duplicationList[dupeId];
     modalTitle.html('Duplication: #' + duplication.id);
-    modalBody.append(duplication.codefragment);
+    codeFragmentElement.append(duplication.codefragment);
     modal.show();
 }
 //# sourceMappingURL=script2.js.map
